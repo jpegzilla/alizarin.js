@@ -93,6 +93,20 @@ const utils = {
       hoursMinutesSeconds: hoursMinutesSeconds,
       fullDateTime: fullDateTime
     };
+  },
+
+  showStackTrace: () => {
+    const styles = [
+      "font-size: 14px; color: rgb(206, 96, 221)",
+      "font-style: italic; font-size: 14px; color: rgb(206, 96, 221)"
+    ];
+    console.groupCollapsed(
+      "%cstack trace %c(click to expand)",
+      styles[0],
+      style[1]
+    );
+    console.trace();
+    console.groupEnd();
   }
 };
 
@@ -146,13 +160,11 @@ class BeautifulLogger {
         console.log(header, headerStyle);
 
         if (messageStyle) console.log(message, messageStyle);
-        console.log(message);
+        else console.log(message);
 
         if (this.verbosity == "high") {
           // append stack trace in subgroup
-
-          console.groupCollapsed("stack trace (click to expand)");
-          console.trace();
+          utils.showStackTrace();
         }
 
         console.groupEnd();
@@ -179,22 +191,21 @@ class BeautifulLogger {
           this.headersize
         }`;
 
-        let messageStyle = `color: ${this.colors.log}; font-size: ${
-          this.fontsize
-        }`;
+        let messageStyle =
+          message == msg
+            ? null
+            : `color:${this.colors.log}; font-size:${this.fontsize}`;
 
         console.group("info");
 
         // log info
         console.log(header, headerStyle);
-        console.log(message, messageStyle);
+        if (messageStyle) console.log(message, messageStyle);
+        else console.log(message);
 
         if (this.verbosity == "high") {
           // append stack trace in subgroup
-
-          console.groupCollapsed("stack trace (click to expand)");
-          console.trace();
-          console.groupEnd();
+          utils.showStackTrace();
         }
       } else return false;
     }
@@ -210,16 +221,32 @@ class BeautifulLogger {
       if (utils.readLevels(this.levels, "error")) {
         let icon = "❌ ⇝";
 
+        let header = `%c${icon} ${APPNAME}: ${
+          utils.date().fullDateTime
+        } error:`;
+
+        let message = typeof msg == "string" ? `%c${msg}` : msg;
+
+        let headerStyle = `font-style: italic; color: ${
+          this.colors.error
+        }; font-size: ${this.headersize}`;
+
+        let messageStyle =
+          message == msg
+            ? null
+            : `color:${this.colors.log}; font-size:${this.fontsize}`;
+
         console.group("error");
 
         // log message here
 
+        console.log(header, headerStyle);
+        if (messageStyle) console.log(message, messageStyle);
+        else console.log(message);
+
         if (this.verbosity == "high") {
           // append stack trace in a subgroup
-
-          console.groupCollapsed("stack trace (click to expand)");
-          console.trace();
-          console.groupEnd();
+          utils.showStackTrace();
         }
 
         console.groupEnd();
@@ -235,14 +262,20 @@ class BeautifulLogger {
   }
 
   // a way to check if something is working the way you expect it to work.
-  assert(a, b, description) {
-    if (!a || !b || !description) {
-    } else {
+  assert(statement, description) {
+    if (this.levels.indexOf("none") > -1) return false;
+    if (!statement || !description)
+      throw new Error("assert requires 3 arguments.");
+    else {
+      if (statement == true) console.log("true!");
+      // temp
+      else console.log("false!"); // temp
     }
   }
 
   // a log for when something fails and you want to see what it was
   fail(msg) {
+    if (this.levels.indexOf("none") > -1) return false;
     let message = `%c${msg}`;
 
     let messageStyle = `color: ${this.colors.failure}; font-size: ${
@@ -253,7 +286,9 @@ class BeautifulLogger {
   }
 
   // a log for when something succeeds and you want to see what it was
-  success() {}
+  success() {
+    if (this.levels.indexOf("none") > -1) return false;
+  }
 
   // clear the console
   clear() {
@@ -274,6 +309,8 @@ class BeautifulLogger {
         level => (acceptableLevels.indexOf(level) > 0 ? true : false)
       );
 
+      console.log(levels);
+
       this.levels = levels;
 
       return levels;
@@ -283,20 +320,20 @@ class BeautifulLogger {
   // set verbosity
   setVerbosity(verbosity) {
     const acceptableVerbosity = ["high", "normal", "low"];
-    if (acceptableVerbosity.indexOf(verbosity) < 0) {
-      this.verbosity = "normal";
-    } else {
-      this.verbosity = verbosity;
-    }
+    if (acceptableVerbosity.indexOf(verbosity) < 0) this.verbosity = "normal";
+    else this.verbosity = verbosity;
+
+    return this.verbosity;
   }
 
   // log information about the library
-  printLibInfo() {
+  printInfo() {
+    if (this.levels.indexOf("none") > -1) return false;
     console.group("library info:");
     let prefix = "%c====== beautiful 💖 logger v1.0 ======\r\n\r\n";
     let prefixStyle = `font-family: monospace; color: ${
       this.colors.success
-    }; font-size: ${this.fontsize + 2}`;
+    }; font-size: ${this.headersize}`;
 
     let msg = `%c[ ${utils.date().fullDateTime} ] INFORMATION:
 
@@ -312,9 +349,7 @@ class BeautifulLogger {
     application name: ${APPNAME},
     file: ${window.location.pathname}${utils.getScriptName()},
     agent: ${navigator.userAgent},
-    platform: ${navigator.platform},
-    online: ${navigator.onLine},
-    appCodeName, appName: ${navigator.appCodeName} - ${navigator.appName}
+    platform: ${navigator.platform}
     `;
 
     let msgStyle = `font-style: italic; font-family: monospace; color: #fff`;
@@ -352,7 +387,8 @@ class BeautifulTester {
   }
 }
 
-const logger = new BeautifulLogger("all", 12, [], "high", "jpegzilla");
-logger.log(window);
+const logger = new BeautifulLogger("jpegzilla's testing app");
 
-logger.printLibInfo();
+logger.log(utils.colors);
+// logger.setLevels("none");
+logger.printInfo();
