@@ -140,6 +140,7 @@ class BeautifulLogger {
 
   // regular log messages
   log(msg) {
+    let startTime = performance.now();
     if (this.levels.indexOf("none") > -1) return false;
     if (!msg) {
       throw new Error("beautifulLogger.log() must be called with an argument.");
@@ -162,11 +163,12 @@ class BeautifulLogger {
         if (messageStyle) console.log(message, messageStyle);
         else console.log(message);
 
-        if (this.verbosity == "high") {
-          // append stack trace in subgroup
-          utils.showStackTrace();
-        }
+        // append stack trace in subgroup
+        if (this.verbosity == "high") utils.showStackTrace();
 
+        let endTime = performance.now();
+        let totalTime = endTime - startTime;
+        console.log(`total time: ${(totalTime * 1000).toFixed(2)} seconds.`);
         console.groupEnd();
       } else return false;
     }
