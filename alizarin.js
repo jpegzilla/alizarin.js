@@ -1,14 +1,20 @@
 "use strict";
 
-let BEAUTIFULDEVELOPMENTMODE = true;
+const ALIZARINDEVELOPMENTMODE = true;
 
-if (BEAUTIFULDEVELOPMENTMODE) {
+// determine whether this is node or the browser
+const ENVIRONMENT =
+  typeof process === "object" && typeof window === "undefined"
+    ? "node"
+    : "browser";
+
+if (ALIZARINDEVELOPMENTMODE && ENVIRONMENT == "browser") {
   const style = [
     "color: rgb(48, 98, 223); font-style: italic",
     "color: rgb(255,255,255); font-style: italic"
   ];
   console.log(
-    "%cusing %cbeautifulLogger.js %cversion %c1.0",
+    "%cusing %calizarin.js %cversion %c1.0",
     style[1],
     style[0],
     style[1],
@@ -16,17 +22,49 @@ if (BEAUTIFULDEVELOPMENTMODE) {
   );
 }
 
-let APPNAME = "beautifulLogger development";
+let APPNAME = "alizarin development";
 
 // utilities used by classes
 
 const utils = {
-  isFunction: fn => {
+  ansi: {
+    reset: "\x1b[0m",
+    bright: "\x1b[1m",
+    bold: "\x1b[1m",
+    dim: "\x1b[2m",
+    italic: "\x1b[3m",
+    underline: "\x1b[4m",
+    blink: "\x1b[5m",
+    reverse: "\x1b[7m",
+    hidden: "\x1b[8m",
+    strike: "\x1b[9m",
+
+    fgBlack: "\x1b[30m",
+    fgRed: "\x1b[31m",
+    fgGreen: "\x1b[32m",
+    fgYellow: "\x1b[33m",
+    fgBlue: "\x1b[34m",
+    fgMagenta: "\x1b[35m",
+    fgCyan: "\x1b[36m",
+    fgWhite: "\x1b[37m",
+
+    bgBlack: "\x1b[40m",
+    bgRed: "\x1b[41m",
+    bgGreen: "\x1b[42m",
+    bgYellow: "\x1b[43m",
+    bgBlue: "\x1b[44m",
+    bgMagenta: "\x1b[45m",
+    bgCyan: "\x1b[46m",
+    bgWhite: "\x1b[47m"
+  },
+
+  isFunction: function(fn) {
     return fn && {}.toString.call(fn) === "[object Function]";
   },
 
-  readLevels: (allLevels, level) => {
-    let checkForLevel = allLevels.split(",");
+  readLevels: function(allLevels, level) {
+    console.log(allLevels);
+    let checkForLevel = allLevels;
 
     return checkForLevel.indexOf(level) > -1
       ? true
@@ -44,7 +82,20 @@ const utils = {
     failure: "rgb(255, 63, 57)"
   },
 
-  getScriptName: () => {
+  symbols: {
+    check: "✔",
+    rdarr: "⇒",
+    ldarr: "⇐",
+    log: "✎",
+    info: "𝕚",
+    warn: "⚠",
+    error: "⨯",
+    success: "👍",
+    failure: "👎",
+    note: "🗏"
+  },
+
+  getScriptName: function() {
     let error = new Error(),
       source,
       lastStackFrameRegex = new RegExp(/.+\/(.*?):\d+(:\d+)*$/),
@@ -60,7 +111,7 @@ const utils = {
     else if (error.fileName != undefined) return error.fileName;
   },
 
-  date: () => {
+  date: function() {
     let d = new Date();
     let yearMonthDay = [
       d.getFullYear(),
@@ -95,7 +146,7 @@ const utils = {
     };
   },
 
-  showStackTrace: () => {
+  showStackTrace: function() {
     const styles = [
       "font-size: 14px; color: rgb(206, 96, 221)",
       "font-style: italic; font-size: 14px; color: rgb(206, 96, 221)"
@@ -103,294 +154,188 @@ const utils = {
     console.groupCollapsed(
       "%cstack trace %c(click to expand)",
       styles[0],
-      style[1]
+      styles[1]
     );
     console.trace();
     console.groupEnd();
   }
 };
 
+utils.nodeColors = {
+  log: utils.ansi.fgWhite,
+  info: utils.ansi.fgBlue,
+  warn: utils.ansi.fgYellow,
+  error: utils.ansi.fgRed,
+  success: utils.ansi.fgGreen,
+  failure: utils.ansi.fgRed
+};
+
 // class for creating fancy console messages
 
-class BeautifulLogger {
+class alizarin {
   constructor(appName = APPNAME) {
     this.levels = "all";
-
     this.fontsize = 14 + "px";
-
     this.headersize = 16 + "px";
-
     this.colors = utils.colors;
-
-    this.verbosity = "high";
-
     this.appName = appName;
   }
 
   setAppName(appName) {
-    if (!appName) {
-      throw new Error(
-        "BeautifulLogger.setAppName() must be called with an argument."
-      );
-    } else {
-      APPNAME = appName;
-      this.appName = APPNAME;
-    }
+    if (!appName)
+      throw new Error("alizarin.setAppName() must be called with an argument.");
+
+    APPNAME = appName;
+    this.appName = APPNAME;
   }
 
   // regular log messages
   log(msg) {
-    let startTime = performance.now();
+    if (!msg)
+      throw new Error("alizarin.log() must be called with an argument.");
+
     if (this.levels.indexOf("none") > -1) return false;
-    if (!msg) {
-      throw new Error("beautifulLogger.log() must be called with an argument.");
-    } else {
-      if (utils.readLevels(this.levels, "log")) {
-        let header = `%c[ ${utils.date().fullDateTime} ] ${APPNAME} log:`;
 
-        let message = typeof msg == "string" ? `%c${msg}` : msg;
-
-        let headerStyle = `color:${this.colors.log}; font-size:${
-          this.headersize
-        }; font-style: italic;`;
-        let messageStyle =
-          message == msg
-            ? null
-            : `color:${this.colors.log}; font-size:${this.fontsize}`;
-
-        console.log(header, headerStyle);
-
-        if (messageStyle) console.log(message, messageStyle);
-        else console.log(message);
-
-        // append stack trace in subgroup
-        if (this.verbosity == "high") utils.showStackTrace();
-
-        let endTime = performance.now();
-        let totalTime = endTime - startTime;
-        console.log(`total time: ${(totalTime * 1000).toFixed(2)} seconds.`);
-        console.groupEnd();
-      } else return false;
-    }
-  }
-
-  // info messages, similar to log but a little more visible
-  info(msg) {
-    if (this.levels.indexOf("none") > -1) return false;
-    if (!msg) {
-      throw new Error(
-        "BeautifulLogger.info() must be called with an argument."
-      );
-    } else {
-      if (utils.readLevels(this.levels, "info")) {
-        let icon = "📋 ↪";
-
-        let header = `%c${icon} ${APPNAME}: ${utils.date().fullDateTime} info:`;
-
-        let message = typeof msg == "string" ? `%c${msg}` : msg;
-
-        let headerStyle = `color: ${this.colors.info}; font-size: ${
-          this.headersize
-        }`;
-
-        let messageStyle =
-          message == msg
-            ? null
-            : `color:${this.colors.log}; font-size:${this.fontsize}`;
-
-        console.group("info");
-
-        // log info
-        console.log(header, headerStyle);
-        if (messageStyle) console.log(message, messageStyle);
-        else console.log(message);
-
-        if (this.verbosity == "high") {
-          // append stack trace in subgroup
-          utils.showStackTrace();
-        }
-      } else return false;
-    }
-  }
-
-  error(msg) {
-    if (this.levels.indexOf("none") > -1) return false;
-    if (!msg) {
-      throw new Error(
-        "beautifulLogger.error() must be called with an argument."
-      );
-    } else {
-      if (utils.readLevels(this.levels, "error")) {
-        let icon = "❌ ⇝";
-
-        let header = `%c${icon} ${APPNAME}: ${
-          utils.date().fullDateTime
-        } error:`;
-
-        let message = typeof msg == "string" ? `%c${msg}` : msg;
-
-        let headerStyle = `font-style: italic; color: ${
-          this.colors.error
-        }; font-size: ${this.headersize}`;
-
-        let messageStyle =
-          message == msg
-            ? null
-            : `color:${this.colors.log}; font-size:${this.fontsize}`;
-
-        console.group("error");
-
-        // log message here
-
-        console.log(header, headerStyle);
-        if (messageStyle) console.log(message, messageStyle);
-        else console.log(message);
-
-        if (this.verbosity == "high") {
-          // append stack trace in a subgroup
-          utils.showStackTrace();
-        }
-
-        console.groupEnd();
-      } else return false;
-    }
-  }
-
-  // warnings, similar to errors but less severe
-  warn() {
-    if (this.levels.indexOf("none") > -1) return false;
-    if (utils.readLevels(this.levels, "warn")) {
+    if (utils.readLevels(this.levels, "log")) {
+      // log the message
     } else return false;
   }
 
-  // a way to check if something is working the way you expect it to work.
-  assert(statement, description) {
-    if (this.levels.indexOf("none") > -1) return false;
-    if (!statement || !description)
-      throw new Error("assert requires 3 arguments.");
-    else {
-      if (statement == true) console.log("true!");
-      // temp
-      else console.log("false!"); // temp
-    }
-  }
-
-  // a log for when something fails and you want to see what it was
-  fail(msg) {
-    if (this.levels.indexOf("none") > -1) return false;
-    let message = `%c${msg}`;
-
-    let messageStyle = `color: ${this.colors.failure}; font-size: ${
-      this.fontsize
-    }`;
-
-    console.trace(message, messageStyle);
-  }
-
-  // a log for when something succeeds and you want to see what it was
-  success() {
-    if (this.levels.indexOf("none") > -1) return false;
-  }
+  // info
+  // error
+  // warn
+  // assert
+  // fail
+  // success
 
   // clear the console
   clear() {
-    console.clear();
+    if (ENVIRONMENT == "browser") console.clear();
+    else process.stdout.write("\x1b[0f");
+
     return 0;
   }
 
   // setlevels takes any amount of strings as arguments and
   // reduces the array to only acceptable logging levels
-  setLevels() {
-    levels = Array.from(new Set([...arguments]));
+  setLevels(levels) {
+    if (typeof levels == "string") levels = levels.split(/\b\s/gi);
 
-    if (levels.length == 0) {
-      return false;
-    } else {
-      const acceptableLevels = ["log", "warn", "info", "error", "all", "none"];
-      levels = levels.filter(
-        level => (acceptableLevels.indexOf(level) > 0 ? true : false)
+    if (levels.indexOf("none") >= 0 && levels.length > 1)
+      throw new Error(
+        "if levels is set to none, no other logging levels can be used."
       );
 
-      console.log(levels);
+    if (levels.length == 0)
+      throw new Error(
+        "cannot set levels with zero parameters. if you're trying to set levels to none, use 'none'."
+      );
 
-      this.levels = levels;
+    const acceptableLevels = ["log", "warn", "info", "error", "all", "none"];
 
-      return levels;
-    }
-  }
+    levels = levels.filter(
+      level => (acceptableLevels.indexOf(level) >= 0 ? true : false)
+    );
 
-  // set verbosity
-  setVerbosity(verbosity) {
-    const acceptableVerbosity = ["high", "normal", "low"];
-    if (acceptableVerbosity.indexOf(verbosity) < 0) this.verbosity = "normal";
-    else this.verbosity = verbosity;
-
-    return this.verbosity;
+    return (this.levels = levels);
   }
 
   // log information about the library
   printInfo() {
     if (this.levels.indexOf("none") > -1) return false;
-    console.group("library info:");
-    let prefix = "%c====== beautiful 💖 logger v1.0 ======\r\n\r\n";
-    let prefixStyle = `font-family: monospace; color: ${
-      this.colors.success
-    }; font-size: ${this.headersize}`;
+    console.group(
+      `${
+        ENVIRONMENT == "node"
+          ? utils.ansi.reset +
+            utils.ansi.reverse +
+            utils.ansi.bright +
+            utils.ansi.fgWhite +
+            "%s" +
+            utils.ansi.reset
+          : ""
+      }`,
+      " library info: "
+    );
+    let prefix =
+      ENVIRONMENT == "browser"
+        ? "%c====== alizarin 💖 logger v1.0 ======\r\n\r\n"
+        : "\r\n====== alizarin ♥ logger v1.0 ======\r\n";
 
-    let msg = `%c[ ${utils.date().fullDateTime} ] INFORMATION:
+    let prefixStyle =
+      ENVIRONMENT == "browser"
+        ? `font-family: monospace; color: ${this.colors.success}; font-size: ${
+            this.headersize
+          }`
+        : `${utils.ansi.reset}${utils.ansi.bright}${utils.ansi.fgMagenta}`;
 
-    GENERAL:
+    let msg = `${ENVIRONMENT == "browser" ? "%c" : ""}[ ${
+      utils.date().fullDateTime
+    } ] INFORMATION
 
-    name: beautifulLogger.js
-    version: 1.0,
-    author: jpegzilla: https://jpegzilla.com,
-    repository: https://github.com/jpegzilla/beautifulLogger
+${
+      ENVIRONMENT == "browser"
+        ? "GENERAL"
+        : utils.ansi.reset +
+          utils.ansi.reverse +
+          utils.ansi.fgMagenta +
+          " GENERAL " +
+          utils.ansi.reset +
+          utils.ansi.fgMagenta
+    }
+    
+name: alizarin.js
+version: 1.0
+author: jpegzilla - https://jpegzilla.com
+repository: https://github.com/jpegzilla/alizarin.js
 
-    APPLICATION/SYSTEM:
+${
+      ENVIRONMENT == "browser"
+        ? "APPLICATION / SYSTEM"
+        : utils.ansi.reset +
+          utils.ansi.fgMagenta +
+          utils.ansi.reverse +
+          " APPLICATION / SYSTEM " +
+          utils.ansi.reset +
+          utils.ansi.fgMagenta
+    }
 
-    application name: ${APPNAME},
-    file: ${window.location.pathname}${utils.getScriptName()},
-    agent: ${navigator.userAgent},
-    platform: ${navigator.platform}
+application name: ${this.appName}
+file: ${
+      ENVIRONMENT == "browser"
+        ? window.location.pathname + utils.getScriptName()
+        : __filename.slice(__dirname.length + 1)
+    }
+${
+      ENVIRONMENT == "browser"
+        ? "agent: " + navigator.userAgent
+        : "os type: " + require("os").type()
+    }
+${
+      ENVIRONMENT == "browser"
+        ? "platform: " + navigator.platform
+        : "os platform: " + require("os").platform()
+    }
     `;
 
-    let msgStyle = `font-style: italic; font-family: monospace; color: #fff`;
-    console.log(prefix, prefixStyle);
-    console.log(msg, msgStyle);
+    let msgStyle =
+      ENVIRONMENT == "browser"
+        ? `font-style: italic; font-family: monospace; color: #fff`
+        : `${utils.ansi.reset}${utils.ansi.fgMagenta}`;
+
+    if (ENVIRONMENT == "browser") {
+      console.log(prefix, prefixStyle);
+      console.log(msg, msgStyle);
+    } else {
+      console.log(prefixStyle, prefix);
+      console.log(msgStyle, msg);
+    }
+
     console.groupEnd();
   }
 }
 
-// class for creating and running tests
-// work in progress.
+const logger = new alizarin("jpegzilla's testing app");
 
-class BeautifulTester {
-  constructor(name) {
-    this.name = name;
-    this.testingSet = {};
-  }
-
-  addTest(test) {
-    if (!utils.isFunction(test))
-      throw new Error("tests can only be defined as functions.");
-  }
-
-  suite(description = "test description", tests = []) {
-    if (tests.length == 0) throw new Error("no tests to perform.");
-    this.suiteName = description;
-
-    const execute = tests => {
-      tests.forEach(test => {
-        console.log(test);
-      });
-    };
-
-    execute();
-  }
-}
-
-const logger = new BeautifulLogger("jpegzilla's testing app");
-
-logger.log(utils.colors);
-// logger.setLevels("none");
 logger.printInfo();
+
+if (ENVIRONMENT == "node") module.exports = alizarin;

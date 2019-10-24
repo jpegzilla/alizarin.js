@@ -1,0 +1,24 @@
+{
+  "name": "alizarin",
+  "version": "1.0.0",
+  "description": "a cute logging utility for node and the browser.",
+  "main": "alizarin.js",
+  "scripts": {
+    "test": "mocha alizarin.test.js",
+    "start": "node alizarin.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jpegzilla/alizarin.js.git"
+  },
+  "author": "jpegzilla",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jpegzilla/beautifulLogger.js/issues"
+  },
+  "homepage": "https://github.com/jpegzilla/beautifulLogger.js#readme",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2"
+  }
+}
