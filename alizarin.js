@@ -1,6 +1,8 @@
 "use strict";
 
 const ALIZARINDEVELOPMENTMODE = true;
+const ALIZARINVERSION = "1.0.0";
+let APPNAME = null;
 
 // determine whether this is node or the browser
 const ENVIRONMENT =
@@ -14,15 +16,13 @@ if (ALIZARINDEVELOPMENTMODE && ENVIRONMENT == "browser") {
     "color: rgb(255,255,255); font-style: italic"
   ];
   console.log(
-    "%cusing %calizarin.js %cversion %c1.0",
+    "%cusing %calizarin.js %cversion %c" + ALIZARINVERSION,
     style[1],
     style[0],
     style[1],
     style[0]
   );
 }
-
-let APPNAME = "alizarin development";
 
 // utilities used by classes
 
@@ -258,8 +258,8 @@ class alizarin {
     );
     let prefix =
       ENVIRONMENT == "browser"
-        ? "%c====== alizarin 💖 logger v1.0 ======\r\n\r\n"
-        : "\r\n====== alizarin ♥ logger v1.0 ======\r\n";
+        ? "%c====== alizarin 💖 logger v" + ALIZARINVERSION + " ======\r\n\r\n"
+        : "\r\n====== alizarin ♥ logger v" + ALIZARINVERSION + " ======\r\n";
 
     let prefixStyle =
       ENVIRONMENT == "browser"
@@ -282,9 +282,9 @@ ${
           utils.ansi.reset +
           utils.ansi.fgMagenta
     }
-    
+
 name: alizarin.js
-version: 1.0
+version: ${ALIZARINVERSION}
 author: jpegzilla - https://jpegzilla.com
 repository: https://github.com/jpegzilla/alizarin.js
 
@@ -299,7 +299,7 @@ ${
           utils.ansi.fgMagenta
     }
 
-application name: ${this.appName}
+application name: ${this.appName || "no name set"}
 file: ${
       ENVIRONMENT == "browser"
         ? window.location.pathname + utils.getScriptName()
